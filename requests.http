@@ -1,0 +1,19 @@
+POST http://localhost:8080/messages
+Content-Type: application/json
+
+{
+  "message": "Hello world!"
+}
+
+###
+
+GET http://localhost:8080/messages
+Content-Type: application/json
+
+###
+
+
+GET http://localhost:8080/messages/df9c3067-04c8-401e-9902-98c672875086
+Content-Type: application/json
+
+###
