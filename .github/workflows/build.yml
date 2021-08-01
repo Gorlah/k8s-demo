@@ -16,6 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
+      - name: Build app
+        run: ./gradlew build
+      
       - name: Build image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME
         
