@@ -1,0 +1,38 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    tags: [ 'v*.*.*' ]
+
+env:
+  DEPLOY_CLUSTER: coruscant-cluster
+  DEPLOY_YML: deployment.yml
+  DEPLOY_ZONE: us-central1-c
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Google Login
+        run: >
+          echo $GOOGLE_CREDENTIALS > account.json
+          && gcloud auth activate-service-account --key-file=account.json
+          && rm account.json
+          && gcloud config set project $(echo $GOOGLE_CREDENTIALS | jq -r '.project_id')
+          && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
+
+      - name: Deploy
+        run: kubectl apply -f $DEPLOY_YML

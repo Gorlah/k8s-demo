@@ -1,4 +1,4 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://${MONGO_SERVICE_SERVICE_HOST}:${MONGO_SERVICE_SERVICE_PORT}/k8s_demo
+      uri: mongodb://localhost:27017/k8s_demo

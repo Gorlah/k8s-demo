@@ -20,6 +20,9 @@ spec:
           image: ghcr.io/gorlah/k8s-demo:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: mongodb://mongo-service.mongo/k8s_demo
 ---
 apiVersion: v1
 kind: Service
