@@ -9,6 +9,9 @@ on:
 
 env:
   IMAGE_NAME: k8s-demo
+  DEPLOY_CLUSTER: coruscant-cluster
+  DEPLOY_YML: deployment.yml
+  DEPLOY_ZONE: us-central1-c
 
 defaults:
   run:
@@ -77,11 +80,9 @@ jobs:
 
       - name: Google Login
         run: >
-          echo $GOOGLE_CREDENTIALS > account.json
-          && gcloud auth activate-service-account --key-file=account.json
-          && rm account.json
+          echo $GOOGLE_CREDENTIALS | gcloud auth activate-service-account --key-file -
           && gcloud config set project $(echo $GOOGLE_CREDENTIALS | jq -r '.project_id')
           && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
 
       - name: Deploy
-        run: kubectl apply -f $DEPLOY_YML
+        run: kubectl apply -f $DEPLOY_YML && k rollout restart -f $DEPLOY_YML
