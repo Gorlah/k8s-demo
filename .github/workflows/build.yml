@@ -28,7 +28,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build app
-      run: ./gradlew build
+      run: ./gradlew build --console=plain
 
   docker:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -85,4 +85,4 @@ jobs:
           && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
 
       - name: Deploy
-        run: kubectl apply -f $DEPLOY_YML && kubectl rollout restart -f $DEPLOY_YML
+        run: kubectl apply -f $DEPLOY_YML && kubectl rollout restart -f $DEPLOY_YML 2> /dev/null
