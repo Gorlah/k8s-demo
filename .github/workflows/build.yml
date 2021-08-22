@@ -85,4 +85,4 @@ jobs:
           && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
 
       - name: Deploy
-        run: kubectl apply -f $DEPLOY_YML && k rollout restart -f $DEPLOY_YML
+        run: kubectl apply -f $DEPLOY_YML && kubectl rollout restart -f $DEPLOY_YML
