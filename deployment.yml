@@ -49,13 +49,13 @@ spec:
       http:
         paths:
           - pathType: Prefix
+            path: /
             backend:
               service:
                 name: k8s-demo
                 port:
                   number: 8080
-            path: /
   tls:
-    - hosts:
+    - secretName: erichaag-io-tls-secret
+      hosts:
         - k8s-demo.erichaag.io
-      secretName: erichaag-io-tls-secret
