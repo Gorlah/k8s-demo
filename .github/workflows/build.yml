@@ -20,6 +20,7 @@ defaults:
 jobs:
 
   build:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -37,6 +38,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Build app
+        run: ./gradlew build --console=plain
 
       - name: Build image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME
