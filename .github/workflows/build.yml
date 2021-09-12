@@ -38,51 +38,57 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build app
-        run: ./gradlew build --console=plain
+      - name: Install Pack
+        uses: buildpacks/github-actions/setup-pack@v4.1.0
 
-      - name: Build image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME
-
-      - name: Log into registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Push image
-        run: |
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-
-          # Change all uppercase to lowercase
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "main" ] && VERSION=latest
-
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
-
-  deploy:
-    if: github.event_name == 'push'
-    needs: docker
-    runs-on: ubuntu-latest
-    environment: production
-    env:
-      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Google Login
-        run: >
-          echo $GOOGLE_CREDENTIALS | gcloud auth activate-service-account --key-file -
-          && gcloud config set project $(echo $GOOGLE_CREDENTIALS | jq -r '.project_id')
-          && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
-
-      - name: Deploy
-        run: kubectl apply -f $DEPLOY_YML && kubectl rollout restart -f $DEPLOY_YML 2> /dev/null || true
+      - name: Test Pack
+        run: pack --version
+#
+#      - name: Build app
+#        run: ./gradlew build --console=plain
+#
+#      - name: Build image
+#        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+#
+#      - name: Log into registry
+#        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+#
+#      - name: Push image
+#        run: |
+#          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+#
+#          # Change all uppercase to lowercase
+#          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+#
+#          # Strip git ref prefix from version
+#          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+#
+#          # Strip "v" prefix from tag name
+#          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+#
+#          # Use Docker `latest` tag convention
+#          [ "$VERSION" == "main" ] && VERSION=latest
+#
+#          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+#          docker push $IMAGE_ID:$VERSION
+#
+#  deploy:
+#    if: github.event_name == 'push'
+#    needs: docker
+#    runs-on: ubuntu-latest
+#    environment: production
+#    env:
+#      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Google Login
+#        run: >
+#          echo $GOOGLE_CREDENTIALS | gcloud auth activate-service-account --key-file -
+#          && gcloud config set project $(echo $GOOGLE_CREDENTIALS | jq -r '.project_id')
+#          && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
+#
+#      - name: Deploy
+#        run: kubectl apply -f $DEPLOY_YML && kubectl rollout restart -f $DEPLOY_YML 2> /dev/null || true
