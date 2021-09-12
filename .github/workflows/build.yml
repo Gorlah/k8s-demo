@@ -11,8 +11,6 @@ env:
   DEPLOY_CLUSTER: coruscant-cluster
   DEPLOY_YML: deployment.yml
   DEPLOY_ZONE: us-central1-c
-  BUILDER_IMAGE: paketobuildpacks/builder:base
-  BUILDER_ENV: ''
 
 defaults:
   run:
@@ -26,21 +24,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        
-      - name: Inspect app
-        id: inspect_app
-        run: test -f gradlew && echo "::set-output name=build_gradle::true" || echo "::set-output name=build_gradle::false"
-        
-      - name: Gradle cache
-        if: ${{ steps.inspect_app.outputs.build_gradle == 'true' }}
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+
+#       - name: Gradle cache
+#         if: ${{ steps.inspect_app.outputs.build_gradle == 'true' }}
+#         uses: actions/cache@v2
+#         with:
+#           path: |
+#             ~/.gradle/caches
+#             ~/.gradle/wrapper
+#           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+#           restore-keys: |
+#             ${{ runner.os }}-gradle-
 
       - name: Gradle build
         if: ${{ steps.inspect_app.outputs.build_gradle == 'true' }}
@@ -54,9 +48,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install pack
-        if: ${{ github.event_name == 'push' }}
-        uses: buildpacks/github-actions/setup-pack@v4.1.0
+#       - name: Install pack
+#         if: ${{ github.event_name == 'push' }}
+#         uses: buildpacks/github-actions/setup-pack@v4.1.0
         
       - name: Build container
         if: ${{ github.event_name == 'push' }}
@@ -73,17 +67,14 @@ jobs:
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo "ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$VERSION" | tr '[A-Z]' '[a-z]')
 
-          # Pack build
-          [[ -z ${BUILDER_ENV+x} ]] || args+=("-e $BUILDER_ENV")
-          pack build $IMAGE_ID --publish --builder "$BUILDER_IMAGE" ${args[@]}
+          docker build . --file Dockerfile --tag $IMAGE_ID
+          docker push $IMAGE_ID
 
   deploy:
    if: github.event_name == 'push'
    needs: build
    runs-on: ubuntu-latest
    environment: production
-   env:
-     GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
    steps:
      - name: Checkout
@@ -91,8 +82,8 @@ jobs:
 
      - name: Google Login
        run: >
-         echo $GOOGLE_CREDENTIALS | gcloud auth activate-service-account --key-file -
-         && gcloud config set project $(echo $GOOGLE_CREDENTIALS | jq -r '.project_id')
+         echo ${{ secrets.GOOGLE_CREDENTIALS }} | gcloud auth activate-service-account --key-file -
+         && gcloud config set project $(echo ${{ secrets.GOOGLE_CREDENTIALS }} | jq -r '.project_id')
          && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
 
      - name: Deploy
