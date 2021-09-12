@@ -25,19 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-#       - name: Gradle cache
-#         if: ${{ steps.inspect_app.outputs.build_gradle == 'true' }}
-#         uses: actions/cache@v2
-#         with:
-#           path: |
-#             ~/.gradle/caches
-#             ~/.gradle/wrapper
-#           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-#           restore-keys: |
-#             ${{ runner.os }}-gradle-
-
       - name: Gradle build
-        if: ${{ steps.inspect_app.outputs.build_gradle == 'true' }}
         run: ./gradlew build --console=plain --no-daemon
 
       - name: Docker login
@@ -47,10 +35,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-#       - name: Install pack
-#         if: ${{ github.event_name == 'push' }}
-#         uses: buildpacks/github-actions/setup-pack@v4.1.0
         
       - name: Build container
         if: ${{ github.event_name == 'push' }}
@@ -75,6 +59,8 @@ jobs:
    needs: build
    runs-on: ubuntu-latest
    environment: production
+   env:
+     GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
    steps:
      - name: Checkout
@@ -82,8 +68,8 @@ jobs:
 
      - name: Google Login
        run: >
-         echo ${{ secrets.GOOGLE_CREDENTIALS }} | gcloud auth activate-service-account --key-file -
-         && gcloud config set project $(echo ${{ secrets.GOOGLE_CREDENTIALS }} | jq -r '.project_id')
+         echo "$GOOGLE_CREDENTIALS" | gcloud auth activate-service-account --key-file -
+         && gcloud config set project $(echo "$GOOGLE_CREDENTIALS" | jq -r '.project_id')
          && gcloud container clusters get-credentials $DEPLOY_CLUSTER --zone=$DEPLOY_ZONE
 
      - name: Deploy
